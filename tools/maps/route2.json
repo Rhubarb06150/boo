@@ -1,0 +1,38 @@
+{
+"default":"grass", 
+"name":"route2", 
+"height":"8", 
+"width":"8", 
+"start":[
+0, 0], 
+"warps":[], 
+"tiles":[
+["sand_slope_1", 4, 4], 
+["sand_slope_1", 3, 6], 
+["sand_slope_1", 5, 2], 
+["sand", 7, 0], 
+["sand", 7, 1], 
+["sand", 7, 2], 
+["sand", 7, 3], 
+["sand", 7, 4], 
+["sand", 6, 4], 
+["sand", 6, 5], 
+["sand", 6, 6], 
+["sand", 5, 6], 
+["sand", 5, 7], 
+["sand", 6, 7], 
+["sand", 7, 7], 
+["sand", 7, 6], 
+["sand", 7, 5], 
+["grass_to_sand", 6, 1], 
+["grass_to_sand", 6, 0], 
+["log", 3, 1], 
+["log", 3, 2], 
+["log", 3, 3], 
+["log", 3, 4], 
+["log_left", 3, 0], 
+["log_right", 3, 5
+]
+], 
+"music":"violet"
+}
