@@ -35,7 +35,10 @@ Controles:
 
 ----- Commandes -----
 
-    pse: Changer de pseudo ---> pse votre_nouveau_pseudo
+    pse: Changer de pseudo ---> pse votre_nouveau_pseudo (uniquement en solo)
+    py: Éxécuter une ligne de python ---> py ligne_a_executer() (uniquement en solo)
+
+    tpto: Se téléporter sur un joueur ---> tpto joueur (uniquement en multijoueur)
 
 ----- Partie Client -----
 
