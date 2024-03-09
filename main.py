@@ -74,17 +74,20 @@ class Game:
     #FONCTIONS POUR LES BOTS ___________________________________________________________________________________________________
 
     def SpawnBot(self):
-        while True:
-            pse=bots.pseudos[randint(0,len(bots.pseudos)-1)]
-            already_took=False
-            for bot in self.bot_list:
-                if bot.pseudo==pse:
-                    already_took=True
-            if not already_took:
-                bot=bots.Bot(self,pse)
-                self.bot_list.append(bot)
-                self.Message('Bot apparu')
-                break
+        if len(self.bot_list)!=len(bots.pseudos):
+            while True:
+                pse=bots.pseudos[randint(0,len(bots.pseudos)-1)]
+                already_took=False
+                for bot in self.bot_list:
+                    if bot.pseudo==pse:
+                        already_took=True
+                if not already_took:
+                    bot=bots.Bot(self,pse)
+                    self.bot_list.append(bot)
+                    self.Message('Bot apparu')
+                    break
+        else:
+            self.Message('Le nombre maximal de bots a été atteint')
 
     def ShowBots(self):
         for bot in self.bot_list:
@@ -156,10 +159,10 @@ class Game:
         else:
             for bot in self.bot_list:
                 self.text = self.font_pseudo.render(bot.pseudo, True, (255, 255, 255))
-                self.screen.blit(self.text,(bot.player_pos[0]-self.player_pos[0]+256,bot.player_pos[1]-self.player_pos[1]+256))
+                self.screen.blit(self.text,(bot.player_pos[0]-self.player_pos[0]-(self.text.get_size()[0]-56)/2+256,bot.player_pos[1]-self.player_pos[1]+230))
 
             self.text = self.font_pseudo.render(self.pseudo, True, (255, 255, 255))
-            self.screen.blit(self.text,(256,220))
+            self.screen.blit(self.text,(256-(self.text.get_size()[0]-56)/2,230))
 
     #FONCTIONS POUR LA CONNEXION ET POUR GÉRER LA PARTIE EN LIGNE ___________________________________________________________________________________________________
 

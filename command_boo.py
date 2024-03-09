@@ -1,13 +1,14 @@
 import pygame,re,sys,string
 from pygame import *
+from random import randint
 
-list_char=['0','1','2','3','4','5','6','7','8','9','.',':','-','_',' ','=','(',')','[',']','{','}',"'",'"',',','*','/',';','\\']
+list_char=['0','1','2','3','4','5','6','7','8','9','.',':','-','_',' ','=','(',')','[',']','{','}',"'",'"',',','*','/',';','\\','@']
 for e in string.ascii_lowercase:
     list_char.append(e)
 for e in string.ascii_uppercase:
     list_char.append(e)
 
-list_commands_offline=['pse','color','py','bot']
+list_commands_offline=['pse','color','py','bot','kill']
 list_commands_online=['tpto','stop']
 list_color=['classic','gold','ash']
 
@@ -49,22 +50,31 @@ def OpenCMD(self):
 
             if event.type==KEYDOWN:
 
-                if event.key!=K_BACKSPACE:
-                    if event.unicode in list_char:
-                        if event.unicode=='!' and cur_text=='':
-                            pass
+                if event.unicode in list_char:
+                    if event.unicode=='!' and cur_text=='':
+                        pass
+                    else:
+                        if index==len(cur_text):
+                            cur_text+=event.unicode
                         else:
-                            if index==len(cur_text):
-                                cur_text+=event.unicode
-                            else:
-                                cur_text=cur_text[:index] + event.unicode + cur_text[index:]
-                            index+=1
-                else:
+                            cur_text=cur_text[:index] + event.unicode + cur_text[index:]
+                        index+=1
+
+                if event.key == pygame.K_BACKSPACE and pygame.key.get_mods() & pygame.KMOD_LCTRL:
+                    if len(cur_text)>0:
+                        while cur_text[index-1]!=' ' and cur_text[index-1]!='.' and cur_text[index-1]!=':' and index!=0:
+                            print(cur_text[index-1])
+                            cur_text = cur_text[:index-1] + cur_text[index:]
+                            index-=1
+                            if index==0:
+                                break
+
+                if event.key==K_BACKSPACE:
                     if index!=0:
                         if index==len(cur_text):
                             cur_text=cur_text[:-1]
                         else:
-                            cur_text = cur_text[:index] + cur_text[index+1:]
+                            cur_text = cur_text[:index-1] + cur_text[index:]
                         index-=1
 
                 if event.key==K_RETURN or event.key==K_KP_ENTER:
@@ -72,13 +82,35 @@ def OpenCMD(self):
                     if cur_text!='':
                         self.serv_list.append(cur_text)
 
-                if event.key==K_RIGHT:
-                    if index<len(cur_text):
-                        index+=1
-
-                if event.key==K_LEFT:
+                if event.key == pygame.K_LEFT and pygame.key.get_mods() & pygame.KMOD_LCTRL:
                     if index>0:
                         index-=1
+                    if len(cur_text)>0:
+                        while cur_text[index]!=' ' and cur_text[index]!='.' and cur_text[index]!=':' and index!=0:
+                            if index==1:
+                                index-=1
+                                break
+                            index-=1
+
+                elif event.key==K_LEFT:
+                    if index>0:
+                        index-=1
+
+                if event.key == pygame.K_RIGHT and pygame.key.get_mods() & pygame.KMOD_LCTRL:
+                    if index<len(cur_text):
+                        index+=1
+                    if len(cur_text)>0:
+                        if index!=len(cur_text):
+                            while cur_text[index]!=' ' and cur_text[index]!='.' and cur_text[index]!=':' and index!=0:
+                                if index==len(cur_text)-1:
+                                    index+=1
+                                    break
+                                index+=1
+                        
+                elif event.key==K_RIGHT:
+                    if index<len(cur_text):
+                        index+=1
+                
                 if index<0:
                     index=0
                 if event.key==K_UP:
@@ -98,6 +130,22 @@ def OpenCMD(self):
                                 cur_text=command
                                 index=len(cur_text)
                                 break
+
+                        if re.match(r'^kill .',cur_text):
+                            for bot in self.bot_list:
+                                if re.match(rf"^{cur_text.replace('kill ','')}",bot.pseudo):
+                                    cur_text=f'kill {bot.pseudo}'
+                                    index=len(cur_text)
+                                    break
+
+                        if re.match(r'^color .',cur_text):
+                            for color in list_color:
+                                if re.match(rf"^{cur_text.replace('color ','')}",color):
+                                    cur_text=f'color {color}'
+                                    index=len(cur_text)
+                                    break
+
+                        
 
                     if self.connected:
                         for command in list_commands_online:
@@ -132,12 +180,13 @@ def OpenCMD(self):
         self.ShowMap()
         self.PlayerInertia()
         self.CheckCollision() 
+        self.ShowBots()
 
         if self.connected:
             self.ServerCommunication()
             self.ShowOtherPlayers()
-            if self.pseudo_view:
-                self.ShowPseudos()
+        if self.pseudo_view:
+            self.ShowPseudos()
         self.ShowPlayer()
         try:
             pygame.draw.rect(self.screen,(0,0,0),(0,self.screen.get_size()[1]-self.text.get_size()[1],self.screen.get_size()[0],self.text.get_size()[1]))
@@ -263,6 +312,40 @@ def OpenCMD(self):
                             self.color=cur_text.replace('color ','')
                             col=cur_text.replace('color ','')
                             self.Message(f'Couleur changée en {col}')
+                        else:
+                            self.Message('La couleur est inconnue, liste dans le README')
+
+                if re.match(r'^kill',cur_text):
+                    if re.match(r'^kill$',cur_text) or re.match(r'^kill $',cur_text):
+                        comm_error=False
+                        self.Message('Veuillez indiquer le bot a tuer')
+                    if re.match(r'^kill .',cur_text):
+                        comm_error=False
+                        btk=cur_text.replace('kill ','')
+                        if len(self.bot_list)>0:
+                            if btk!='all' and btk!='@r':
+                                found=False
+                                for bot in self.bot_list:
+                                    if bot.pseudo==btk:
+                                        self.bot_list.remove(bot)
+                                        found=True
+                                        break
+                                if found:
+                                    self.Message(f'Le bot {btk} a bien été tué')
+                                else:
+                                    self.Message(f"Aucun bot au nom de {btk} n'a été trouvé")
+                            elif btk=='all':
+                                self.bot_list=[]
+                                self.Message('Tout les bots ont été tués')
+                            elif btk=='@r':
+                                kill=self.bot_list[randint(0,len(self.bot_list)-1)]
+                                self.bot_list.remove(kill)
+                                self.Message(f'Le sort est tombé sur {kill.pseudo}')
+                            else:
+                                self.Message("L'argument donné n'a pas pu être exploité")
+                        else:
+                            self.Message("Il n'y a aucun bot a tuer ici")
+
 
                 
                 if cur_text=='bot':

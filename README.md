@@ -1,4 +1,4 @@
-   ---   REQUIS   ---
+----- REQUIS -----
 
     Linux:
         Python 3
@@ -14,22 +14,25 @@
     BoogieTheGame.exe
     Server.exe
     main.py
+    bots.py
+    command_boo.py
     server.py
     pseudo
     port
-    README.txt
+    README.md
     ___________
 
     Les éxécutable et/ou fichers .py doivent être dans le même dossier 
     qui contient le dossier assets/ 
 
-Controles:
+----- Controles -----
 
     [←,↑,→,↓] ---> déplacement
     [Espace] ---> plus rapide mais plus lent a freiner
     [Maj] ---> cacher ses yeux
     [Maj + F] ---> se moquer
-    [P] ---> Afficher les pseudos des autres joueurs (uniquement en multijoueur, logique)
+    [P] ---> Afficher les pseudos des autres joueurs en mode en ligne, et celui des bots en mode solo
+    [B] ---> Faire apparaître un bot
 
     [!] ---> taper une commande
 
@@ -37,8 +40,10 @@ Controles:
 
     pse: Changer de pseudo ---> pse votre_nouveau_pseudo (uniquement en solo)
     py: Éxécuter une ligne de python ---> py ligne_a_executer() (uniquement en solo)
+    color: Changer sa couleur ---> color couleur (classic,ash,gold)
 
     tpto: Se téléporter sur un joueur ---> tpto joueur (uniquement en multijoueur)
+    stop: Quitter le serveur
 
 ----- Partie Client -----
 

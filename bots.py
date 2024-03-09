@@ -4,7 +4,7 @@ import pygame
 from command_boo import list_color
 
 direction=['L','R']
-pseudos=['Captain Falcon','Fox','Falco','Ness','Pikachu','Mewtwo','Juloxus','Matheal','Rhubarb']
+pseudos=['Captain Falcon','Fox','Falco','Ness','Pikachu','Mewtwo','Juloxus','Matheal','Rhubarb','Benoît','Donkey Kong']
 
 class Bot:
 
@@ -19,6 +19,7 @@ class Bot:
         self.font_pseudo = pygame.font.Font("assets/font/font.ttf", 25)
                
         self.state='chasing'
+        self.running=False
         self.color=list_color[randint(0,len(list_color)-1)]
         self.pseudo=pseudo
 
@@ -105,7 +106,18 @@ class Bot:
 
     def Move(self,player,x,y):
 
+        print(self.state,self.running)
+
         self.CheckCollision(player)
+
+        #POUR UNE SORTE DE COMPORTEMENT ALÉATOIRE
+
+        if self.state=='running':
+            self.max_speed=self.real_max_speed
+            self.velocity=8
+        else:
+            self.max_speed=self.max_speed_fv
+            self.velocity=self.velocity_fv
 
         if randint(1,5)<3:
 
@@ -146,5 +158,13 @@ class Bot:
                     self.player_speed_d-=self.brake
             else:
                 self.moving_d=False
-            
+
+        if randint(1,240)==1:
+            self.running = not self.running
+
+        if self.running:
+            self.state='running'
+        else:
+            self.state='chasing'
+
         self.PlayerInertia()
