@@ -23,7 +23,7 @@ class Game:
         self.player_list=[]
         self.pseudo_view=False
         self.serv_list=[]
-        self.screen=display.set_mode((640,576),vsync=1)
+        self.screen=display.set_mode((640,576), vsync=1)
         self.running=True
         self.clock=pygame.time.Clock()
         display.set_icon(image.load('assets/boo/classic/chasing.png'))
@@ -74,25 +74,30 @@ class Game:
     #FONCTIONS POUR LES BOTS ___________________________________________________________________________________________________
 
     def SpawnBot(self):
-        if len(self.bot_list)!=len(bots.pseudos):
-            while True:
-                pse=bots.pseudos[randint(0,len(bots.pseudos)-1)]
-                already_took=False
-                for bot in self.bot_list:
-                    if bot.pseudo==pse:
-                        already_took=True
-                if not already_took:
-                    bot=bots.Bot(self,pse)
-                    self.bot_list.append(bot)
-                    self.Message('Bot apparu')
-                    break
+        if not self.connected:
+            if len(self.bot_list)!=len(bots.pseudos):
+                while True:
+                    pse=bots.pseudos[randint(0,len(bots.pseudos)-1)]
+                    already_took=False
+                    for bot in self.bot_list:
+                        if bot.pseudo==pse:
+                            already_took=True
+                    if not already_took:
+                        bot=bots.Bot(self,pse)
+                        self.bot_list.append(bot)
+                        self.Message('Bot apparu')
+                        break
+            else:
+                self.Message('Le nombre maximal de bots a été atteint')
         else:
-            self.Message('Le nombre maximal de bots a été atteint')
+            self.Message('Impossible de faire apparaître un bot en ligne')
+        
 
     def ShowBots(self):
-        for bot in self.bot_list:
-            bot.ShowBot(self)
-            bot.Move(self,self.player_pos[0]-bot.player_pos[0],self.player_pos[1]-bot.player_pos[1])
+        if not self.connected:
+            for bot in self.bot_list:
+                bot.ShowBot(self)
+                bot.Move(self,self.player_pos[0]-bot.player_pos[0],self.player_pos[1]-bot.player_pos[1])
 
 
     #FONCTIONS D'AFFICHAGE DES TRUCS IMPORTANT ___________________________________________________________________________________________________
@@ -118,7 +123,7 @@ class Game:
             else:
                 self.other_player=self.other_default_sprite
             if self.other_players_infos[i-1][3] !=self.pseudo:
-                self.screen.blit(self.other_player,(self.other_players_infos[i-1][0][0]-self.player_pos[0]+256,self.other_players_infos[i-1][0][1]-self.player_pos[1]+256))
+                self.screen.blit(self.other_player,(int(self.other_players_infos[i-1][0][0]-self.player_pos[0]+256),int(self.other_players_infos[i-1][0][1]-self.player_pos[1]+256)))
         for i in range(self.players_nb):
             self.player_list.append(self.other_players_infos[i-1][3])
 
@@ -152,10 +157,11 @@ class Game:
             for e in self.other_players_infos:
                 if e[3]!=self.pseudo:
                     self.text = self.font_pseudo.render(f"{e[3]}", True, (255, 255, 255))
-                    self.screen.blit(self.text,(0,0))
+                    self.screen.blit(self.text,(e[0][0]-self.player_pos[0]-(self.text.get_size()[0]-56)/2+256,e[0][1]-self.player_pos[1]+230))
+
                 else:
                     self.text = self.font_pseudo.render(self.pseudo, True, (255, 255, 255))
-                    self.screen.blit(self.text,(256,220))
+                    self.screen.blit(self.text,(256-(self.text.get_size()[0]-56)/2,230))
         else:
             for bot in self.bot_list:
                 self.text = self.font_pseudo.render(bot.pseudo, True, (255, 255, 255))
@@ -227,7 +233,6 @@ class Game:
                 return
 
         except socket.error as e:
-            print(e)
             self.connected=False
             self.host.client.close()
             self.Message('La connexion avec le serveur a été intérompue')
