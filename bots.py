@@ -106,8 +106,6 @@ class Bot:
 
     def Move(self,player,x,y):
 
-        print(self.state,self.running)
-
         self.CheckCollision(player)
 
         #POUR UNE SORTE DE COMPORTEMENT ALÉATOIRE

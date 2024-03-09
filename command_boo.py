@@ -63,7 +63,6 @@ def OpenCMD(self):
                 if event.key == pygame.K_BACKSPACE and pygame.key.get_mods() & pygame.KMOD_LCTRL:
                     if len(cur_text)>0:
                         while cur_text[index-1]!=' ' and cur_text[index-1]!='.' and cur_text[index-1]!=':' and index!=0:
-                            print(cur_text[index-1])
                             cur_text = cur_text[:index-1] + cur_text[index:]
                             index-=1
                             if index==0:
