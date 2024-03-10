@@ -117,15 +117,17 @@ class Game:
     def ShowOtherPlayers(self):
         self.player_list=[]
         for i in range(self.players_nb):
-            self.other_default_sprite=transform.scale(image.load(f'assets/boo/{self.other_players_infos[i-1][1]}.png'),(46,42))
-            if self.other_players_infos[i-1][2]!='L':
-                self.other_player=transform.flip(self.other_default_sprite,True,False)
-            else:
-                self.other_player=self.other_default_sprite
-            if self.other_players_infos[i-1][3] !=self.pseudo:
-                self.screen.blit(self.other_player,(int(self.other_players_infos[i-1][0][0]-self.player_pos[0]+256),int(self.other_players_infos[i-1][0][1]-self.player_pos[1]+256)))
+            if self.other_players_infos[i]!=self.other_players_infos[-1]:
+                self.other_default_sprite=transform.scale(image.load(f'assets/boo/{self.other_players_infos[i][1]}.png'),(46,42))
+                if self.other_players_infos[i][2]!='L':
+                    self.other_player=transform.flip(self.other_default_sprite,True,False)
+                else:
+                    self.other_player=self.other_default_sprite
+                if self.other_players_infos[i][3] !=self.pseudo:
+                    self.screen.blit(self.other_player,(int(self.other_players_infos[i][0][0]-self.player_pos[0]+256),int(self.other_players_infos[i][0][1]-self.player_pos[1]+256)))
         for i in range(self.players_nb):
-            self.player_list.append(self.other_players_infos[i-1][3])
+            if self.other_players_infos[i]!=self.other_players_infos[-1]:
+                self.player_list.append(self.other_players_infos[i][3])
 
     #FONCTION POUR L'INTERFACE ET LE GUI C LA MEME CHOSE JE SAIS ___________________________________________________________________________________________________
 
@@ -155,13 +157,14 @@ class Game:
     def ShowPseudos(self):
         if self.connected:
             for e in self.other_players_infos:
-                if e[3]!=self.pseudo:
-                    self.text = self.font_pseudo.render(f"{e[3]}", True, (255, 255, 255))
-                    self.screen.blit(self.text,(e[0][0]-self.player_pos[0]-(self.text.get_size()[0]-56)/2+256,e[0][1]-self.player_pos[1]+230))
+                if e!=self.other_players_infos[-1]:
+                    if e[3]!=self.pseudo:
+                        self.text = self.font_pseudo.render(f"{e[3]}", True, (255, 255, 255))
+                        self.screen.blit(self.text,(e[0][0]-self.player_pos[0]-(self.text.get_size()[0]-56)/2+256,e[0][1]-self.player_pos[1]+230))
 
-                else:
-                    self.text = self.font_pseudo.render(self.pseudo, True, (255, 255, 255))
-                    self.screen.blit(self.text,(256-(self.text.get_size()[0]-56)/2,230))
+                    else:
+                        self.text = self.font_pseudo.render(self.pseudo, True, (255, 255, 255))
+                        self.screen.blit(self.text,(256-(self.text.get_size()[0]-56)/2,230))
         else:
             for bot in self.bot_list:
                 self.text = self.font_pseudo.render(bot.pseudo, True, (255, 255, 255))
@@ -219,7 +222,7 @@ class Game:
             
             self.host.client.send(pickle.dumps([[int(self.player_pos[0]),int(self.player_pos[1])],(self.color+'/'+self.state),self.direction,self.pseudo]))
             self.other_players_infos=pickle.loads(self.host.client.recv(1024))
-            self.players_nb=len(self.other_players_infos)
+            self.players_nb=len(self.other_players_infos)-1
 
             if self.players_nb!=1:
                 display.set_caption(f'{self.pseudo} - Connecté à {self.host.server_ip} ({self.players_nb} joueurs)')
@@ -238,6 +241,26 @@ class Game:
             self.Message('La connexion avec le serveur a été intérompue')
         except Exception as e:
             pass
+
+    def Kick(self,player):
+        
+        if self.connected:
+            if self.pseudo in self.other_players_infos[-1]:
+                if player in self.player_list:
+                    self.host.client.send(pickle.dumps([[int(self.player_pos[0]),int(self.player_pos[1])],(self.color+'/'+self.state),self.direction,self.pseudo,f'kick {player}']))
+                    self.Message(f'{player} a été expulsé')
+                    return
+                else:
+                    self.Message(f"Le joueur '{player}' n'a pas été trouvé")
+                    return
+            else:
+                self.Message(f"Vous n'êtes pas opérateur")
+                return
+        else:
+            self.Message(f"Cette commande fonctionne uniquement en ligne")
+        
+            
+                
 
     #FONCTIONS PHYSIQUES ___________________________________________________________________________________________________
 

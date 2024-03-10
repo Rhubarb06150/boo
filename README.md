@@ -41,9 +41,13 @@
     pse: Changer de pseudo ---> pse votre_nouveau_pseudo (uniquement en solo)
     py: Éxécuter une ligne de python ---> py ligne_a_executer() (uniquement en solo)
     color: Changer sa couleur ---> color couleur (classic,ash,gold)
+    bot: Fait apparaître un bot (uniquement en solo)
+    kill: Tue un bot ---> kill nom_du_bot (tue le bot avec le nom donné) kill all (tue tout les bots) kill @r (tue un bot au hasard)
+    mv: Vous déplace avec une valeur et une direction donnée ---> mv valeurdirection exemple: mv 600d (vous déplace de 600 a droite)
 
     tpto: Se téléporter sur un joueur ---> tpto joueur (uniquement en multijoueur)
     stop: Quitter le serveur
+    kick: Expulse un joueur uniquement si vous êtes sur la liste des opérateurs
 
 ----- Partie Client -----
 
@@ -65,9 +69,12 @@
 
     Lorsque vous lancez le serveur, un message est affiché vous indiquant l'IP
     et le port sur lequel le serveur est lancé (par défaut 12500), pour changer 
-    ce dernier, modifiez le contenu du fihcier "port" qui doit être dans le même
-    dossier que l'executable du serveur, si le port n'est pas reconnu alors il sera
-    remis par défaut a 12500
+    ce dernier, modifiez le contenu du fihcier ".port" qui doit être dans le 
+    dossier assets, si le port n'est pas reconnu alors il sera remis par défaut 
+    a 12500
+
+    Pour ajouter des opérateurs, modifiez le contenu du fihcier ".ops" en écrivant
+    le nom des opérateurs séparés par des espaces.
 
     /!\ Il se peut qu'aucun client n'arrive à se connecter a votre serveur, si cela arrive,
     essayez de désactiver le pare-feu et de réessayer /!\
@@ -75,4 +82,4 @@
     /!\ Parfois il y a des messages d'erreur lorsqu'un joueur quitte le serveur,
     cela n'affecte rien au serveur, mais j'aimerai bien empecher l'affichage de ces messages /!\
 
-version 0.2
+version 0.3

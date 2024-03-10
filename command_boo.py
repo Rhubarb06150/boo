@@ -345,6 +345,9 @@ def OpenCMD(self):
                         else:
                             self.Message("Il n'y a aucun bot a tuer ici")
 
+                if re.match(r'^kick',cur_text) or re.match(r'^kick$',cur_text) or re.match(r'^kick $',cur_text) or re.match(r'^kick .',cur_text):
+                    comm_error=False
+                    self.Message("Cette commande ne fonctione qu'en ligne")
 
                 
                 if cur_text=='bot':
@@ -393,6 +396,15 @@ def OpenCMD(self):
                     self.Message('Code éxécuté sans erreur')
                 except Exception as e:
                     self.Message(f'Erreur: {e}')
+
+            if re.match(r'^kick',cur_text):
+                if re.match(r'^kick$',cur_text) or re.match(r'^kick $',cur_text):
+                    comm_error=False
+                    self.Message('Veuillez indiquer le joueur à expulser')
+                if re.match(r'^kick .',cur_text):
+                    comm_error=False
+                    ptk=cur_text.replace('kick ','')
+                    self.Kick(ptk)
 
         if comm_error:
             self.Message('Commande invalide')
