@@ -1,14 +1,14 @@
 from pygame import *
 from random import randint
 import pygame
-from command_boo import list_color
 
 direction=['L','R']
-pseudos=['Captain Falcon','Fox','Falco','Ness','Pikachu','Mewtwo','Juloxus','Matheal','Rhubarb','Benoît','Donkey Kong']
+pseudos=['Captain Falcon','Fox','Falco','Ness','Pikachu','Mewtwo','Juloxus','Matheal','Rhubarb','Benoît','Donkey Kong','Diddy Kong','Luigi','Mario','Ryu','Ho-Oh']
+list_color=['classic','gold','ash']
 
 class Bot:
 
-    def __init__(self,player,pseudo):
+    def __init__(self,player,pseudo,precision,frequency):
 
         self.velocity=10 #DEFAUT 10
         self.velocity_fv=self.velocity
@@ -17,8 +17,14 @@ class Bot:
         self.real_max_speed=100 #DEFAUT 100
         self.brake=1 #DEFAUT 1
         self.font_pseudo = pygame.font.Font("assets/font/font.ttf", 25)
+        self.precision=precision
+        self.frequency=frequency
                
         self.state='chasing'
+        if randint(0,1)==1:
+            self.pattern='chasing'
+        else:
+            self.pattern='running_away'
         self.running=False
         self.color=list_color[randint(0,len(list_color)-1)]
         self.pseudo=pseudo
@@ -117,52 +123,105 @@ class Bot:
             self.max_speed=self.max_speed_fv
             self.velocity=self.velocity_fv
 
-        if randint(1,5)<3:
+        if self.pattern=='chasing':
 
-            if x>10:
-                self.direction='R'
-                self.moving_r=True
-                if self.player_speed_r<self.max_speed:
-                    self.player_speed_r+=self.brake
+            if randint(1,10)<=self.frequency:
+
+                if x>self.precision:
+                    self.direction='R'
+                    self.moving_r=True
+                    if self.player_speed_r<self.max_speed:
+                        self.player_speed_r+=self.brake
+                    else:
+                        self.player_speed_r-=self.brake
                 else:
-                    self.player_speed_r-=self.brake
-            else:
-                self.moving_r=False
+                    self.moving_r=False
 
-            if x<-10:
-                self.direction='L'
-                self.moving_l=True
-                if self.player_speed_l<self.max_speed:
-                    self.player_speed_l+=self.brake
+                if x<-abs(self.precision):
+                    self.direction='L'
+                    self.moving_l=True
+                    if self.player_speed_l<self.max_speed:
+                        self.player_speed_l+=self.brake
+                    else:
+                        self.player_speed_l-=self.brake
                 else:
-                    self.player_speed_l-=self.brake
-            else:
-                self.moving_l=False
+                    self.moving_l=False
 
-            if y<-10:
-                self.moving_u=True
-                if self.player_speed_u<self.max_speed:
-                    self.player_speed_u+=self.brake
+                if y<-abs(self.precision):
+                    self.moving_u=True
+                    if self.player_speed_u<self.max_speed:
+                        self.player_speed_u+=self.brake
+                    else:
+                        self.player_speed_u-=self.brake
                 else:
-                    self.player_speed_u-=self.brake
-            else:
-                self.moving_u=False
+                    self.moving_u=False
 
-            if y>10:
-                self.moving_d=True
-                if self.player_speed_d<self.max_speed:
-                    self.player_speed_d+=self.brake
+                if y>self.precision:
+                    self.moving_d=True
+                    if self.player_speed_d<self.max_speed:
+                        self.player_speed_d+=self.brake
+                    else:
+                        self.player_speed_d-=self.brake
                 else:
-                    self.player_speed_d-=self.brake
+                    self.moving_d=False
+
+            if randint(1,240)==1:
+                self.running = not self.running
+
+            if self.running:
+                self.state='running'
             else:
-                self.moving_d=False
+                self.state='chasing'
 
-        if randint(1,240)==1:
-            self.running = not self.running
+        elif self.pattern=='running_away':
 
-        if self.running:
-            self.state='running'
-        else:
-            self.state='chasing'
+            if randint(1,5)<3:
+
+                if x<10 or self.player_pos[0]<200:
+                    self.direction='R'
+                    self.moving_r=True
+                    if self.player_speed_r<self.max_speed:
+                        self.player_speed_r+=self.brake
+                    else:
+                        self.player_speed_r-=self.brake
+                else:
+                    self.moving_r=False
+
+                if x>-10 or player.map_sur.get_size()[0]-self.player_pos[0]<200:
+                    self.direction='L'
+                    self.moving_l=True
+                    if self.player_speed_l<self.max_speed:
+                        self.player_speed_l+=self.brake
+                    else:
+                        self.player_speed_l-=self.brake
+                else:
+                    self.moving_l=False
+
+                if y>-10 or player.map_sur.get_size()[1]-self.player_pos[1]<200:
+                    self.moving_u=True
+                    if self.player_speed_u<self.max_speed:
+                        self.player_speed_u+=self.brake
+                    else:
+                        self.player_speed_u-=self.brake
+                else:
+                    self.moving_u=False
+
+                if y<10 or self.player_pos[1]<200:
+                    self.moving_d=True
+                    if self.player_speed_d<self.max_speed:
+                        self.player_speed_d+=self.brake
+                    else:
+                        self.player_speed_d-=self.brake
+                else:
+                    self.moving_d=False
+
+            if randint(1,240)==1:
+                self.running = not self.running
+
+            if self.running:
+                self.state='running'
+            else:
+                self.state='chasing'
+
 
         self.PlayerInertia()

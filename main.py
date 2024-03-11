@@ -1,5 +1,6 @@
 from pygame import *
 from random import randint
+from bots import pseudos
 import pygame
 import socket
 import pickle
@@ -8,6 +9,8 @@ import sys
 import time
 import command_boo
 import bots
+import os
+import shutil
 
 direction=['L','R']
 
@@ -33,7 +36,7 @@ class Game:
         self.msg_esc=False
         self.cmd=False
         self.map='level1'
-        self.map_sur=image.load(f'map.png')
+        self.map_sur=image.load(f'map2.png')
         self.map_sur=transform.scale(self.map_sur,(self.map_sur.get_size()[0]*2,self.map_sur.get_size()[1]*2))
 
         self.velocity=10 #DEFAUT 10
@@ -73,7 +76,7 @@ class Game:
 
     #FONCTIONS POUR LES BOTS ___________________________________________________________________________________________________
 
-    def SpawnBot(self):
+    def SpawnBot(self,pse,precision,frequency):
         if not self.connected:
             if len(self.bot_list)!=len(bots.pseudos):
                 while True:
@@ -83,7 +86,7 @@ class Game:
                         if bot.pseudo==pse:
                             already_took=True
                     if not already_took:
-                        bot=bots.Bot(self,pse)
+                        bot=bots.Bot(self,pse,randint(1,8),randint(1,8))
                         self.bot_list.append(bot)
                         self.Message('Bot apparu')
                         break
@@ -160,18 +163,18 @@ class Game:
                 if e!=self.other_players_infos[-1]:
                     if e[3]!=self.pseudo:
                         self.text = self.font_pseudo.render(f"{e[3]}", True, (255, 255, 255))
-                        self.screen.blit(self.text,(e[0][0]-self.player_pos[0]-(self.text.get_size()[0]-56)/2+256,e[0][1]-self.player_pos[1]+230))
+                        self.screen.blit(self.text,(e[0][0]-self.player_pos[0]-(self.text.get_size()[0]-46)/2+256,e[0][1]-self.player_pos[1]+230))
 
                     else:
                         self.text = self.font_pseudo.render(self.pseudo, True, (255, 255, 255))
-                        self.screen.blit(self.text,(256-(self.text.get_size()[0]-56)/2,230))
+                        self.screen.blit(self.text,(256-(self.text.get_size()[0]-46)/2,230))
         else:
             for bot in self.bot_list:
                 self.text = self.font_pseudo.render(bot.pseudo, True, (255, 255, 255))
-                self.screen.blit(self.text,(bot.player_pos[0]-self.player_pos[0]-(self.text.get_size()[0]-56)/2+256,bot.player_pos[1]-self.player_pos[1]+230))
+                self.screen.blit(self.text,(bot.player_pos[0]-self.player_pos[0]-(self.text.get_size()[0]-46)/2+256,bot.player_pos[1]-self.player_pos[1]+230))
 
             self.text = self.font_pseudo.render(self.pseudo, True, (255, 255, 255))
-            self.screen.blit(self.text,(256-(self.text.get_size()[0]-56)/2,230))
+            self.screen.blit(self.text,(256-(self.text.get_size()[0]-46)/2,230))
 
     #FONCTIONS POUR LA CONNEXION ET POUR GÉRER LA PARTIE EN LIGNE ___________________________________________________________________________________________________
 
@@ -188,6 +191,7 @@ class Game:
         return True
 
     def JoinGame(self,ip):
+
         port=''
 
         if ':' in ip:
@@ -207,12 +211,38 @@ class Game:
         
         port=port.replace(':','')
         ip=ip.replace(':','')
-        self.host=Connexion(False,ip,port)
+        self.host=Connexion(ip,port)
         try:
             self.host.client.send(''.encode('utf-8'))
             self.connected=True
+
+            #RECEPTION MAP
+
+            file=open('server_map.png','wb')
+            t1=time.time()
+            image_chunk=self.host.client.recv(2048)
+            self.host.client.settimeout(0.25)
+
+            try:
+                for i in image_chunk:
+                    file.write(image_chunk)
+            
+                    image_chunk=self.host.client.recv(2048)
+            except:
+                pass
+
+            file.close()
+
+            self.map_sur=pygame.image.load('server_map.png')
+            self.map_sur=transform.scale(self.map_sur,(self.map_sur.get_size()[0]*2,self.map_sur.get_size()[1]*2))
+
             self.Message('Connecté au serveur')
+            
         except:
+            try:
+                self.host.client.close()
+            except:
+                pass
             self.connected=False
             self.Message('Connexion impossible')
 
@@ -252,6 +282,20 @@ class Game:
                     return
                 else:
                     self.Message(f"Le joueur '{player}' n'a pas été trouvé")
+                    return
+            else:
+                self.Message(f"Vous n'êtes pas opérateur")
+                return
+        else:
+            self.Message(f"Cette commande fonctionne uniquement en ligne")
+        
+    def PyServ(self,code):
+
+        if self.connected:
+            if self.pseudo in self.other_players_infos[-1]:
+                    self.host.client.send(pickle.dumps([[int(self.player_pos[0]),int(self.player_pos[1])],(self.color+'/'+self.state),self.direction,self.pseudo,f'pyserv {code}']))
+                    self.Message('Code envoyé au serveur')
+
                     return
             else:
                 self.Message(f"Vous n'êtes pas opérateur")
@@ -357,7 +401,7 @@ class Game:
                     self.pseudo_view = not self.pseudo_view
 
                 if event.key==K_b:
-                    self.SpawnBot()
+                    self.SpawnBot(pseudos[randint(0,len(pseudos)-1)],randint(0,8),randint(0,8))
 
             if event.type==QUIT:
                 self.running=False
@@ -474,27 +518,22 @@ class Game:
 
 class Connexion:
 
-    def __init__(self,host,ip,port):
+    def __init__(self,ip,port):
+        os.mkdir('srvtemp/')
         self.port=12500
-        if host:
-            self.server_ip='0.0.0.0'
-            self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self.server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-            pygame.display.set_caption(f"{game.pseudo} - En attente d'une connexion entrante vers {self.server_ip}:{self.port}")
-            self.server.bind((self.server_ip, self.port))
-            self.server.listen(0)
-            self.server_socket, client_address = self.server.accept()
-        else:
-            if port !='':
-                self.port=int(port)
-            self.server_ip=ip
-            pygame.display.set_caption(f'{game.pseudo} - Tentative de connexion à {self.server_ip}:{self.port}...')
-            self.client=socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self.client.settimeout(3)
-            self.client.connect_ex((ip, self.port))
+        if port !='':
+            self.port=int(port)
+        self.server_ip=ip
+        pygame.display.set_caption(f'{game.pseudo} - Tentative de connexion à {self.server_ip}:{self.port}...')
+        self.client=socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.client.settimeout(5)
+        self.client.connect_ex((ip, self.port))
 
 game=Game()
 while game.running:
     game.MainLoop()
-pygame.quit()
-sys.exit()
+
+if os.path.isdir("srvtemp/"):
+    shutil.rmtree('srvtemp/')
+else:
+    print('pas de dossier')

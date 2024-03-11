@@ -1,12 +1,21 @@
-import socket,pickle,sys
 from random import randint
 from threading import Thread
+import json
+import socket
+import pickle
+import sys
+import re
+import pygame
+
 
 sys.tracebacklimit=0
 
 class Server:
         
     def __init__(self):
+
+        #TENTATIVE DE RECUPERER LES OPS
+
         try:
             self.ops=open('assets/.ops','r').read()
             self.ops=list(self.ops.split(" "))
@@ -18,17 +27,35 @@ class Server:
         except:
             self.port=12500
             print(f"/!\ Le port du fichier port n'a pas pu être lu, le port à donc été mis en 12500 par défault")
-
+        self.clock=pygame.time.Clock()
         self.server_ip='0.0.0.0'
         self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.server.bind((self.server_ip, self.port))
         self.server.listen(5)
 
+        print('Chargement de la carte...')
+
+        file=open('map/server_map.png','rb')
+        image_data=file.read(2048)
+        # map_start_pos=json.loads(open('map/map.json','r').read(1024))
+
+        print('La carte est chargée')
+
         print(f'Serveur ouvert et en écoute sur {self.server_ip}:{self.port}')
 
         while True:
+
             conn, addr = self.server.accept()
+
+            #ENVOI MAP
+            
+            while image_data:
+                conn.send(image_data)
+                image_data=file.read(2048)
+            file.close()
+            print('Carte envoyée')
+
             try:
                 print(f"{(socket.gethostbyaddr(addr[0])[0])} s'est connecté ({(addr[0])})")
             except:
@@ -44,6 +71,7 @@ class Server:
 
         while True:
 
+            self.clock.tick(60)
             dt_lst=[]
 
             #ICI C LE FORMATTAGE ET LE PAQUETAGE RECU DE TOUT LES CLIENTS
@@ -66,11 +94,10 @@ class Server:
             for player in dt_lst:
                 list_pseudo.append(player[3])
 
-            #ÉVENTUALITÉ DE KICK
+            #ÉVENTUALITÉ DE COMMANDE ENVOYEE PAR UN OPERATEUR
 
             for dt in dt_lst:
-                ind=0
-                if 'kick' in dt[-1]:
+                if re.match('^kick .',dt[-1]):
                     for player in dt_lst:
                         index=0
                         if player[3]==dt[-1].replace('kick ',''):
@@ -78,7 +105,13 @@ class Server:
                             print(dt[-1].replace('kick ','')+' exclu')
                             break
                         index+=1
-                ind+=1
+                if re.match('^pyserv .',dt[-1]):
+                    try:
+                        exec(dt[-1].replace('pyserv ',''))
+                        print(dt[-1].replace('pyserv ','')+' éxécuté par '+dt[3])
+                    except Exception as e:
+                        self.Message(f'Erreur: {e}')
+
 
             #VERIFICATION DES OPS
 
@@ -95,7 +128,6 @@ class Server:
                 except:
                     pass
             
-
             #POUR VIRER DES JOUEURS AYANT LE MEME PSEUDO, CA VIRE QUE CELUI QUI ESSAYE DE SE CONNECTER ET NON CELUI QUI EST DÉJA CONNECTÉ
 
             for pseudo in list_pseudo:

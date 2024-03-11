@@ -8,46 +8,46 @@
 
     --- VERIFIER L'ARCHITECTURE DES DOSSIERS ---
 
-    __________
-
-    assets/
-    BoogieTheGame.exe
-    Server.exe
-    main.py
-    bots.py
-    command_boo.py
-    server.py
-    pseudo
-    port
-    README.md
-    ___________
-
     Les éxécutable et/ou fichers .py doivent être dans le même dossier 
     qui contient le dossier assets/ 
 
 ----- Controles -----
 
     [←,↑,→,↓] ---> déplacement
-    [Espace] ---> plus rapide mais plus lent a freiner
-    [Maj] ---> cacher ses yeux
+    [Espace] ---> voter boo est plus rapide mais plus long a freiner
+    [Maj] ---> cacher ses yeux mais impossible de se déplacer dans cet état
     [Maj + F] ---> se moquer
     [P] ---> Afficher les pseudos des autres joueurs en mode en ligne, et celui des bots en mode solo
-    [B] ---> Faire apparaître un bot
+    [B] ---> Faire apparaître un bot (uniquement en solo)
 
     [!] ---> taper une commande
 
 ----- Commandes -----
 
-    pse: Changer de pseudo ---> pse votre_nouveau_pseudo (uniquement en solo)
-    py: Éxécuter une ligne de python ---> py ligne_a_executer() (uniquement en solo)
-    color: Changer sa couleur ---> color couleur (classic,ash,gold)
-    bot: Fait apparaître un bot (uniquement en solo)
-    kill: Tue un bot ---> kill nom_du_bot (tue le bot avec le nom donné) kill all (tue tout les bots) kill @r (tue un bot au hasard)
-    mv: Vous déplace avec une valeur et une direction donnée ---> mv valeurdirection exemple: mv 600d (vous déplace de 600 a droite)
+    Solo:
 
-    tpto: Se téléporter sur un joueur ---> tpto joueur (uniquement en multijoueur)
-    stop: Quitter le serveur
-    kick: Expulse un joueur uniquement si vous êtes sur la liste des opérateurs
+        pse: Changer de pseudo ---> pse votre_nouveau_pseudo
+        py: Éxécuter une ligne de python ---> py ligne_a_executer()
+        color: Changer sa couleur ---> color couleur (classic,ash,gold)
+        bot: Fait apparaître un bot
+
+        kill: Tue un bot ---> arguments:
+            kill nom_du_bot (tue le bot avec le nom donné)
+            kill all (tue tout les bots)
+            kill @r (tue un bot au hasard)
+
+        mv: Vous déplace avec une valeur et une direction donnée ---> exemples:
+            u: haut, d: bas, l: gauche, r: droite
+
+            mv 600d (vous déplace de 600 vers le bas)
+            mv 420l (vous déplace de 420 vers la gauche)
+
+    Multijoueur:
+
+        tpto: Se téléporter sur un joueur ---> tpto joueur (uniquement pour les opérateurs)
+        stop: Quitter le serveur
+        kick: Expulse un joueur (uniquement pour les opérateurs)
+        pyserv: Envoyer du code a éxécuter au serveur (uniquement pour les opérateurs)
 
 ----- Partie Client -----
 

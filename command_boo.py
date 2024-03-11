@@ -1,6 +1,10 @@
-import pygame,re,sys,string
 from pygame import *
 from random import randint
+from bots import pseudos,list_color
+import pygame
+import re
+import sys
+import string
 
 list_char=['0','1','2','3','4','5','6','7','8','9','.',':','-','_',' ','=','(',')','[',']','{','}',"'",'"',',','*','/',';','\\','@']
 for e in string.ascii_lowercase:
@@ -9,8 +13,7 @@ for e in string.ascii_uppercase:
     list_char.append(e)
 
 list_commands_offline=['pse','color','py','bot','kill']
-list_commands_online=['tpto','stop']
-list_color=['classic','gold','ash']
+list_commands_online=['tpto','stop','pyserv','kick']
 
 def CheckLetters(text):
     letters=False
@@ -188,7 +191,7 @@ def OpenCMD(self):
             self.ShowPseudos()
         self.ShowPlayer()
         try:
-            pygame.draw.rect(self.screen,(0,0,0),(0,self.screen.get_size()[1]-self.text.get_size()[1],self.screen.get_size()[0],self.text.get_size()[1]))
+            pygame.draw.rect(self.screen,(0,0,0),(0,self.screen.get_size()[1]-40,self.screen.get_size()[0],40))
         except:
             pass
         if index-len(cur_text)!=0:
@@ -224,7 +227,12 @@ def OpenCMD(self):
             elif re.match(r"[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}", cur_text):
                 text_tp=f'Tentative de connexion vers {text_tp}...'
                 self.screen.fill((0,0,0))
-                self.screen.blit(self.player,(self.player_pos[0],self.player_pos[1]))
+                self.ShowMap()
+                self.ShowBots()
+                if self.pseudo_view:
+                    self.ShowPseudos()
+                self.ShowPlayer()
+                pygame.draw.rect(self.screen,(0,0,0),(0,self.screen.get_size()[1]-40,self.screen.get_size()[0],40))
                 self.text = self.font.render(f"> {text_tp}", True, (0, 255, 0))
                 wtext,htext=self.text.get_size()
                 self.screen.blit(self.text,(0,(self.screen.get_size())[1]-htext))
@@ -239,7 +247,12 @@ def OpenCMD(self):
                     cur_text=cur_text.replace('0:','')
                     text_tp=f'Tentative de connexion vers localhost:{cur_text}...'
                     self.screen.fill((0,0,0))
-                    self.screen.blit(self.player,(self.player_pos[0],self.player_pos[1]))
+                    self.ShowMap()
+                    self.ShowBots()
+                    if self.pseudo_view:
+                        self.ShowPseudos()
+                    self.ShowPlayer()
+                    pygame.draw.rect(self.screen,(0,0,0),(0,self.screen.get_size()[1]-40,self.screen.get_size()[0],40))
                     self.text = self.font.render(f"> {text_tp}", True, (0, 255, 0))
                     wtext,htext=self.text.get_size()
                     self.screen.blit(self.text,(0,(self.screen.get_size())[1]-htext))
@@ -350,20 +363,35 @@ def OpenCMD(self):
                     self.Message("Cette commande ne fonctione qu'en ligne")
 
                 
-                if cur_text=='bot':
-                    self.SpawnBot()
+                if re.match(r'^bot',cur_text):
                     comm_error=False
+                    if re.match(r'^bot$',cur_text):
+                        self.SpawnBot(pseudos[randint(0,len(pseudos)-1)],randint(2,10),randint(2,10))
+                    elif re.match(r'^bot .',cur_text):
+                        tup=list(map(str, cur_text.replace('bot ','').split(' ')))
+                        tup[1],tup[2]=int(tup[1]),int(tup[2])
+                        print(tup)
+                        self.SpawnBot(tup[0],tup[1],tup[2])
+
+
 
             elif cur_text=='0':
                 text_tp=f'Tentative de connexion vers localhost:12500...'
                 self.screen.fill((0,0,0))
-                self.screen.blit(self.player,(self.player_pos[0],self.player_pos[1]))
+                self.ShowMap()
+                self.ShowBots()
+                if self.pseudo_view:
+                    self.ShowPseudos()
+                self.ShowPlayer()
+                pygame.draw.rect(self.screen,(0,0,0),(0,self.screen.get_size()[1]-40,self.screen.get_size()[0],40))
                 self.text = self.font.render(f"> {text_tp}", True, (0, 255, 0))
                 wtext,htext=self.text.get_size()
                 self.screen.blit(self.text,(0,(self.screen.get_size())[1]-htext))
                 display.update()
                 comm_error=False
                 self.JoinGame(f"localhost:12500")
+
+                #COMMANDES POUR LE JEU EN LIGNE ________________________
         else:
 
             if cur_text=='stop':
@@ -379,12 +407,13 @@ def OpenCMD(self):
             if re.match(r'^tpto .',cur_text):
                 found=False
                 for player in self.other_players_infos:
-                    if player[3] == cur_text.replace('tpto ',''):
-                        self.player_pos=player[0]
-                        self.direction=player[2]
-                        comm_error=False
-                        found=True
-                        self.Message(f'Téléporté sur {player[3]}')
+                    if player!=self.other_players_infos[-1]:
+                        if player[3] == cur_text.replace('tpto ',''):
+                            self.player_pos=player[0]
+                            self.direction=player[2]
+                            comm_error=False
+                            found=True
+                            self.Message(f'Téléporté sur {player[3]}')
                 if not found:
                     comm_error=False
                     pse_totp=cur_text.replace('tpto ','')
@@ -396,6 +425,14 @@ def OpenCMD(self):
                     self.Message('Code éxécuté sans erreur')
                 except Exception as e:
                     self.Message(f'Erreur: {e}')
+
+            if re.match(r'^pyserv .',cur_text):
+                comm_error=False
+                try:
+                    self.PyServ(cur_text.replace('pyserv ',''))
+                except Exception as e:
+                    self.Message(f'Erreur: {e}')
+
 
             if re.match(r'^kick',cur_text):
                 if re.match(r'^kick$',cur_text) or re.match(r'^kick $',cur_text):
