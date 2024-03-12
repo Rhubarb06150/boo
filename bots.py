@@ -1,6 +1,7 @@
 from pygame import *
 from random import randint
 import pygame
+import json
 
 direction=['L','R']
 pseudos=['Captain Falcon','Fox','Falco','Ness','Pikachu','Mewtwo','Juloxus','Matheal','Rhubarb','Benoît','Donkey Kong','Diddy Kong','Luigi','Mario','Ryu','Ho-Oh']
@@ -19,6 +20,11 @@ class Bot:
         self.font_pseudo = pygame.font.Font("assets/font/font.ttf", 25)
         self.precision=precision
         self.frequency=frequency
+
+        self.map_collision=json.loads(open('map/level.json').read())["hitboxes"]
+        self.collision_vars=[]
+        for i in range(len(self.map_collision)):
+            self.collision_vars.append('')
                
         self.state='chasing'
         if randint(0,1)==1:
@@ -110,9 +116,47 @@ class Bot:
         self.player_pos[0]-=self.player_speed_l/self.velocity/self.brake
         self.player_pos[0]+=self.player_speed_r/self.velocity/self.brake
 
+    def CheckMapCollision(self):
+        index=0
+        for hitbox in self.map_collision:
+
+            self.collision_vars[index]
+
+            if self.player_pos[0]+38<hitbox[0]*48:
+                self.collision_vars[index]=('L')
+            if self.player_pos[0]>hitbox[0]*48+hitbox[2]*48:
+                self.collision_vars[index]=('R')
+
+            if self.player_pos[1]+42<hitbox[1]*48:
+                self.collision_vars[index]=('U')
+            if self.player_pos[1]>hitbox[1]*48+hitbox[3]*48:
+                self.collision_vars[index]=('D')
+
+            if self.collision_vars[index]=='L' and int(self.player_pos[0])+46>=hitbox[0]*48:
+                self.player_speed_l=self.player_speed_r*self.wall_bounce
+                self.player_speed_r=0
+                self.player_pos[0]=hitbox[0]*48-46
+            
+            if self.collision_vars[index]=='R' and int(self.player_pos[0])<hitbox[0]*48+hitbox[2]*48:
+                self.player_speed_r=self.player_speed_l*self.wall_bounce
+                self.player_speed_l=0
+                self.player_pos[0]=hitbox[0]*48+hitbox[2]*48+0.05
+
+            if self.collision_vars[index]=='U' and int(self.player_pos[1])+42>=hitbox[1]*48:
+                self.player_speed_u=self.player_speed_d*self.wall_bounce
+                self.player_speed_d=0
+                self.player_pos[1]=hitbox[1]*48-42
+            if self.collision_vars[index]=='D' and int(self.player_pos[1])<hitbox[1]*48+hitbox[3]*48:
+                self.player_speed_d=self.player_speed_u*self.wall_bounce
+                self.player_speed_u=0
+                self.player_pos[1]=hitbox[1]*48+hitbox[3]*48+0.05
+
+            index+=1
+
     def Move(self,player,x,y):
 
         self.CheckCollision(player)
+        self.CheckMapCollision()
 
         #POUR UNE SORTE DE COMPORTEMENT ALÉATOIRE
 

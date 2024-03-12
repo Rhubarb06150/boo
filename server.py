@@ -6,6 +6,7 @@ import pickle
 import sys
 import re
 import pygame
+import numpy as np
 
 
 sys.tracebacklimit=0
@@ -36,9 +37,8 @@ class Server:
 
         print('Chargement de la carte...')
 
-        file=open('map/server-map.png','rb')
+        file=open('map.png','rb')
         image_data=file.read(2048)
-        # map_start_pos=json.loads(open('map/map.json','r').read(1024))
 
         print('La carte est chargée')
 
@@ -54,6 +54,7 @@ class Server:
                 conn.send(image_data)
                 image_data=file.read(2048)
             file.close()
+
             print('Carte envoyée')
 
             try:

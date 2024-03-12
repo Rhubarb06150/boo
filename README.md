@@ -82,4 +82,4 @@
     /!\ Parfois il y a des messages d'erreur lorsqu'un joueur quitte le serveur,
     cela n'affecte rien au serveur, mais j'aimerai bien empecher l'affichage de ces messages /!\
 
-version 0.3
+version 0.4

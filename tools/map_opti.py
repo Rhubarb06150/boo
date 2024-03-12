@@ -3,15 +3,16 @@ import tkinter as tk
 from tkinter import messagebox,ttk,filedialog
 from tkinter import *
 import PIL,os,json
-from PIL import Image,ImageTk
+from PIL import Image,ImageTk,ImageDraw
 import cv2
 from map_create import *
 
-choosen_map='route2'
+choosen_map='level'
 
+hitbox_view=False
 lis=[]
-warps=[]
 start_pos=[]
+hitboxes=[]
 saved=False
 w=0
 h=0
@@ -36,6 +37,17 @@ def hex_to_rgb(hex):
     
     return tuple(rgb)
 
+def show_hitboxes():
+    print('show_hitboxes')
+    global hitboxes,im
+    draw=ImageDraw.Draw(im)
+    for hit in hitboxes:
+        draw.rectangle((hit[0]*16*int(zoom.get()), hit[1]*16*int(zoom.get()), hit[2]*16*int(zoom.get())+hit[0]*16*int(zoom.get()), hit[3]*16*int(zoom.get())+hit[1]*16*int(zoom.get())), fill=(255, 0, 0))
+    img_=ImageTk.PhotoImage(im)
+    preview.configure(image=img_)
+    preview.im=img_
+
+
 
 def rm_color(color,image):
 
@@ -54,15 +66,7 @@ def rm_color(color,image):
 
     img.putdata(newData)
     img.save(image)
-    
-dir_path = 'assets/sounds/musics/'
-music_list = []
-for file_path in os.listdir(dir_path):
-    if os.path.isfile(os.path.join(dir_path, file_path)):
-        music_list.append(str(file_path))
 
-for i in range(len(music_list)):
-    music_list[i]=str(music_list[i]).replace('.wav','')
 
 def RBGAImage(path):
     return Image.open(path).convert("RGBA")
@@ -92,25 +96,18 @@ def create_tile(tile,i,j,e):
     if e == 'r':
         fill_load()
 
+def hitbox_switch():
+    global hitbox_view
+
+    hitbox_view=not hitbox_view
+    fill_load()
+
 def mouse(e):
    
    xm= e.x
    ym= e.y
    y.set(int(xm/int(zoom.get())/16))
    x.set(int(ym/int(zoom.get())/16))
-   for w in warps:
-        if w[1]==int(x.get()) and w[2]==int(y.get()):
-            map_w.delete(0,END)
-            map_w.insert(0,w[0])
-            x_warp.set(w[3])
-            y_warp.set(w[4])
-            warp_type.set(w[5])
-            break
-        else:
-            map_w.delete(0,END)
-            x_warp.set(0)
-            y_warp.set(0)
-            warp_type.set('Escaliers')
 
 def mouse_p(e):
    
@@ -130,7 +127,7 @@ def mouse_rm(e):
 
 def fill_load():
 
-    global w,h,im
+    global w,h,im,hitbox_view
     print('fill load')
     map=json.load(open('maps/'+choosen_map+'.json'))
     w,h=map["height"],map["width"]
@@ -150,40 +147,66 @@ def fill_load():
             cop=(Image.open('assets/tiles/'+str(i[0])+'.png')).resize((wid*int(zoom.get()),hei*int(zoom.get())),Image.NEAREST)
             im.paste(cop, (i[2]*16*int(zoom.get()), i[1]*16*int(zoom.get())))
 
-    print(im)
+    if hitbox_view:
+        show_hitboxes()
 
     img_=ImageTk.PhotoImage(im)
     preview.configure(image=img_)
     preview.im=img_
 
+def rm_color(color,image):
+    color_=hex_to_rgb(color)
+    img = Image.open(image)
+    img = img.convert("RGBA")
+    datas = img.getdata()
+
+    newData = []
+
+    for item in datas:
+        if item[0] == color_[0] and item[1] == color_[1] and item[2] == color_[2]:
+            newData.append((0, 0, 0, 0))
+        else:
+            newData.append(item)
+
+    img.putdata(newData)
+    img.save(image)
+
 def add_tile():
-    global w,h,liste_tiles,im
-    a=0
+    global w,h,liste_tiles,im,hitbox_view
+    if not hitbox_view:
+        a=0
 
-    for elm in liste_tiles:
-        if elm[1]==int(x.get()) and elm[2]==int(y.get()):
-            liste_tiles.remove(liste_tiles[a])
-        a+=1
+        for elm in liste_tiles:
+            if elm[1]==int(x.get()) and elm[2]==int(y.get()):
+                liste_tiles.remove(liste_tiles[a])
+            a+=1
 
-    liste_tiles.append([choosen_tile.get(),int(x.get()),int(y.get())])
-    
-    cop=(Image.open('assets/tiles/'+choosen_tile.get()+'.png')).resize((16*int(zoom.get()),16*int(zoom.get())),Image.NEAREST)
-    im_=cv2.imread('assets/tiles/'+choosen_tile.get()+'.png')
-    hei,wid,c=im_.shape
-    cop=cop.resize((wid*int(zoom.get()),hei*int(zoom.get())),Image.NEAREST)
-    im.paste(cop, (int(y.get())*16*int(zoom.get()),int(x.get())*16*int(zoom.get())))
+        liste_tiles.append([choosen_tile.get(),int(x.get()),int(y.get())])
+        
+        cop=(Image.open('assets/tiles/'+choosen_tile.get()+'.png')).resize((16*int(zoom.get()),16*int(zoom.get())),Image.NEAREST)
+        im_=cv2.imread('assets/tiles/'+choosen_tile.get()+'.png')
+        hei,wid,c=im_.shape
+        cop=cop.resize((wid*int(zoom.get()),hei*int(zoom.get())),Image.NEAREST)
+        im.paste(cop, (int(y.get())*16*int(zoom.get()),int(x.get())*16*int(zoom.get())))
 
-    print('add tile')
-    print(im)
+    else:
+
+        hitboxes.append([int(y.get()),int(x.get()),int(h_width.get()),int(h_height.get())])
+        fill_load()
 
     img_=ImageTk.PhotoImage(im)
     preview.configure(image=img_)
     preview.im=img_
 
 def ctrlz():
+    global hitboxes,hitbox_view
     try:
-        liste_tiles.remove(liste_tiles[-1])
-        fill_load()
+        if not hitbox_view:
+            liste_tiles.remove(liste_tiles[-1])
+            fill_load()
+        else:
+            hitboxes.remove(hitboxes[-1])
+            fill_load()
     except:
         msg=messagebox.showerror(title='erreur',message='aucune action a annuler')
 
@@ -219,6 +242,7 @@ def format_json(data):
 def save_json():
     global saved
     global start_pos
+    global hitboxes
     start_res=[]
     if start_pos == []:
         start_res=[0,0]
@@ -232,9 +256,8 @@ def save_json():
         "height":height.get(),
         "width":width.get(),
         "start":start_res,
-        "warps":warps,
         "tiles":liste_tiles,
-        "music":str(music.get())
+        "hitboxes":hitboxes
 
     }
     json_map = format_json(json.dumps(dic, indent=0, separators=(',', ':')))
@@ -247,11 +270,13 @@ def save_json():
 
     create_map(name.get())
     
+    rm_color('00c6ff',f'maps/{name.get()}.png')
+    
 
 def load_map():
     global liste_tiles
     global start_pos
-    global warps
+    global hitboxes
     file_path = filedialog.askopenfilename()
     if file_path!='':
         map=open(file_path)
@@ -260,18 +285,14 @@ def load_map():
         default_tile.set(file['default'])
         height.set(file['height'])
         width.set(file['width'])
-        music.set(file["music"])
         name.delete(0,END)
         name.insert(0,file['name'])
         liste_tiles=file['tiles']
+        hitboxes=file['hitboxes']
         try:
             start_pos=file["start"]
         except:
             pass    
-        try:
-            warps=file["warps"]
-        except:
-            pass
         fill_load()
 
 def tile_preview():
@@ -302,45 +323,61 @@ def start_pos_def():
 def all_down():
     global start_pos
     global liste_tiles
+    global hitboxes
+
     try:
         start_pos[0]-=1
     except:
         pass
     for i in liste_tiles:
         i[1]+=1
+    for i in hitboxes:
+        i[1]+=1
     fill_load()
 
 def all_up():
     global start_pos
     global liste_tiles
+    global hitboxes
+
     try:
         start_pos[0]+=1
     except:
         pass
     for i in liste_tiles:
         i[1]-=1
+    for i in hitboxes:
+        i[1]-=1
     fill_load()
 
 def all_left():
     global start_pos
+    global hitboxes
     global liste_tiles
+
     try:
         start_pos[1]-=1
     except:
         pass
     for i in liste_tiles:
         i[2]-=1
+    for i in hitboxes:
+        i[0]-=1
     fill_load()
 
 def all_right():
     global start_pos
     global liste_tiles
+    global hitboxes
+
     try:
         start_pos[1]+=1
     except:
         pass
     for i in liste_tiles:
         i[2]+=1
+    for i in hitboxes:
+        i[0]+=1
     fill_load()
 
 
@@ -370,14 +407,17 @@ height=ttk.Combobox(values=intvalues,width=3,state='readonly')
 height.place(x=2,y=24)
 width=ttk.Combobox(values=intvalues,width=3,state='readonly')
 width.place(x=2,y=46)
+
+h_height=ttk.Combobox(values=intvalues,width=3,state='readonly')
+h_height.place(x=2,y=440)
+h_width=ttk.Combobox(values=intvalues,width=3,state='readonly')
+h_width.place(x=2,y=460)
+
 preview=Label()
 preview.place(x=100,y=2)
 zoom=ttk.Combobox(values=intvalues,width=3,state='readonly')
 zoom.place(x=2,y=104)
 zoom.set(2)
-music=ttk.Combobox(values=music_list,width=10,state='readonly')
-music.place(x=2,y=540)
-music.set('violet')
 height.set(8)
 width.set(8)
 default_tile.set('empty')
@@ -394,36 +434,8 @@ rm.place(x=2,y=244)
 save=Button(text='save',command=lambda:save_json())
 save.place(x=2,y=280)
 
-#WARPS
-def add_warp():
-    for i in range(len(warps)):
-        if warps[i][1]==int(x.get()) and warps[i][2]==int(y.get()):
-            warps.remove(warps[i])
-    warps.append([map_w.get(),int(x.get()),int(y.get()),int(x_warp.get()),int(y_warp.get()),str(warp_type.get())])
-    msg=messagebox.showinfo(message=('warp placé en',str(x.get()),str(y.get()),'vers',map_w.get(),'en',str(x_warp.get()),str(y_warp.get()),str(warp_type.get())))
-
-def rm_warp():
-    for i in range(len(warps)):
-        if warps[i][1]==int(x.get()) and warps[i][2]==int(y.get()):
-            warps.remove(warps[i])
-            map_w.delete(0,END)
-            x_warp.set(0)
-            y_warp.set(0)
-            warp_type.set('Escaliers')
-            break
-
 map_w=Entry(width=8)
 map_w.place(x=2,y=390)
-x_warp=ttk.Combobox(values=tile_values,width=3,state='readonly')
-y_warp=ttk.Combobox(values=tile_values,width=3,state='readonly')
-x_warp.place(x=2,y=420)
-y_warp.place(x=2,y=450)
-w_t=['Escaliers','INDOOR','OUTDOOR','Échelle']
-warp_type=ttk.Combobox(values=w_t,width=7,state='readonly')
-warp_type.place(x=2,y=480)
-warp_type.set('Escaliers')
-x_warp.set(0)
-y_warp.set(0)
 
 name=Entry(width=15)
 name.place(x=2,y=304)
@@ -445,10 +457,7 @@ root.bind('<Left>', lambda event:y.set(int(y.get())-1))
 root.bind('<Right>', lambda event:y.set(int(y.get())+1))
 root.bind('<Control-P>', lambda event:start_pos_def())
 root.bind('<Control-p>', lambda event:start_pos_def())
-root.bind('<Control-W>', lambda event:add_warp())
-root.bind('<Control-w>', lambda event:add_warp())
-root.bind('<Control-Delete>', lambda event:rm_warp())
-root.bind('<Control-Delete>', lambda event:rm_warp())
+root.bind('<H>', lambda event:hitbox_switch())
 root.bind('<Button-1>',mouse)
 root.bind('<Control-Button-1>',mouse_p)
 root.bind('<Control-Button-3>',mouse_rm)

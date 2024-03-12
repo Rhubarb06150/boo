@@ -11,6 +11,7 @@ import command_boo
 import bots
 import os
 import shutil
+import json
 
 direction=['L','R']
 
@@ -35,9 +36,20 @@ class Game:
         self.message=''
         self.msg_esc=False
         self.cmd=False
-        self.map='level1'
-        self.map_sur=image.load(f'map2.png')
-        self.map_sur=transform.scale(self.map_sur,(self.map_sur.get_size()[0]*2,self.map_sur.get_size()[1]*2))
+        self.map_sur=image.load(f'map/level.png')
+        self.map_collision=json.loads(open('map/level.json').read())["hitboxes"]
+        self.collision_vars=[]
+        for i in range(len(self.map_collision)):
+            self.collision_vars.append('')
+        self.start_pos=json.loads(open('map/level.json').read())["start"]
+
+        self.map_sur=image.load(f'map/level.png')
+        self.map_sur=transform.scale(self.map_sur,(self.map_sur.get_size()[0]*3,self.map_sur.get_size()[1]*3))
+
+
+        self.bg_sur1=image.load(f'map/bg/bg1.png')
+
+        self.bg_sur1=transform.scale(self.bg_sur1,(self.bg_sur1.get_size()[0]*3,self.bg_sur1.get_size()[1]*3))
 
         self.velocity=10 #DEFAUT 10
         self.velocity_fv=self.velocity
@@ -64,10 +76,11 @@ class Game:
         self.direction='R'
         self.other_direction='R'
 
-        self.wall_bounce=0.8 #DEFAUT 0.8
+        self.wall_bounce=0.5 #DEFAUT 0.8
 
         self.demo=False
         self.player_pos=[0,0]
+        self.player_pos[0],self.player_pos[1]=self.start_pos[0]*48,self.start_pos[1]*48
 
         self.other_player_pos=[0,0]
         self.other_player_state='chasing'
@@ -105,7 +118,10 @@ class Game:
 
     #FONCTIONS D'AFFICHAGE DES TRUCS IMPORTANT ___________________________________________________________________________________________________
 
-    def ShowMap(self):
+    def ShowBG(self):
+        self.screen.blit(self.bg_sur1,(-abs(self.player_pos[0])/2,-abs(self.player_pos[1])/2))
+
+    def ShowLevel(self):
         self.screen.blit(self.map_sur,(-abs(self.player_pos[0])+256,-abs(self.player_pos[1])+256))
 
     def ShowPlayer(self):
@@ -218,8 +234,7 @@ class Game:
 
             #RECEPTION MAP
 
-            file=open('server_map.png','wb')
-            t1=time.time()
+            file=open('srvtemp/server-map.png','wb')
             image_chunk=self.host.client.recv(2048)
             self.host.client.settimeout(0.25)
 
@@ -233,12 +248,13 @@ class Game:
 
             file.close()
 
-            self.map_sur=pygame.image.load('server_map.png')
-            self.map_sur=transform.scale(self.map_sur,(self.map_sur.get_size()[0]*2,self.map_sur.get_size()[1]*2))
+            self.map_sur=pygame.image.load('srvtemp/server-map.png')
+            self.map_sur=transform.scale(self.map_sur,(self.map_sur.get_size()[0]*3,self.map_sur.get_size()[1]*3))
 
             self.Message('Connecté au serveur')
             
-        except:
+        except Exception as e:
+            print(e)
             try:
                 self.host.client.close()
             except:
@@ -303,10 +319,44 @@ class Game:
         else:
             self.Message(f"Cette commande fonctionne uniquement en ligne")
         
-            
-                
-
     #FONCTIONS PHYSIQUES ___________________________________________________________________________________________________
+            
+    def CheckMapCollision(self):
+        index=0
+        for hitbox in self.map_collision:
+
+            self.collision_vars[index]
+
+            if self.player_pos[0]+46<hitbox[0]*48:
+                self.collision_vars[index]=('L')
+            if self.player_pos[0]>hitbox[0]*48+hitbox[2]*48:
+                self.collision_vars[index]=('R')
+
+            if self.player_pos[1]+42<hitbox[1]*48:
+                self.collision_vars[index]=('U')
+            if self.player_pos[1]>hitbox[1]*48+hitbox[3]*48:
+                self.collision_vars[index]=('D')
+
+            if self.collision_vars[index]=='L' and int(self.player_pos[0])+46>=hitbox[0]*48:
+                self.player_speed_l=self.player_speed_r*self.wall_bounce
+                self.player_speed_r=0
+                self.player_pos[0]=hitbox[0]*48-46
+            
+            elif self.collision_vars[index]=='R' and int(self.player_pos[0])<hitbox[0]*48+hitbox[2]*48:
+                self.player_speed_r=self.player_speed_l*self.wall_bounce
+                self.player_speed_l=0
+                self.player_pos[0]=hitbox[0]*48+hitbox[2]*48+0.05
+
+            elif self.collision_vars[index]=='U' and int(self.player_pos[1])+42>=hitbox[1]*48:
+                self.player_speed_u=self.player_speed_d*self.wall_bounce
+                self.player_speed_d=0
+                self.player_pos[1]=hitbox[1]*48-42
+            elif self.collision_vars[index]=='D' and int(self.player_pos[1])<hitbox[1]*48+hitbox[3]*48:
+                self.player_speed_d=self.player_speed_u*self.wall_bounce
+                self.player_speed_u=0
+                self.player_pos[1]=hitbox[1]*48+hitbox[3]*48+0.05
+
+            index+=1
 
     def CheckCollision(self):
         
@@ -417,6 +467,7 @@ class Game:
         keys=pygame.key.get_pressed()
 
         self.CheckCollision()
+        self.CheckMapCollision()
 
 
         if keys[K_LSHIFT]:
@@ -499,7 +550,8 @@ class Game:
             self.Message('Connexion avec le serveur perdue/intérompue')
             self.connected,self.hosting=False,False
 
-        self.ShowMap()
+        self.ShowBG()
+        self.ShowLevel()
         self.ShowBots()
 
         if self.connected:
@@ -519,7 +571,8 @@ class Game:
 class Connexion:
 
     def __init__(self,ip,port):
-        os.mkdir('srvtemp/')
+        if not os.path.exists('srvtemp/'):
+            os.mkdir('srvtemp/')
         self.port=12500
         if port !='':
             self.port=int(port)

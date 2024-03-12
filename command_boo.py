@@ -179,7 +179,9 @@ def OpenCMD(self):
                     break
 
         self.screen.fill((0,0,0))
-        self.ShowMap()
+        self.ShowBG()
+        self.ShowLevel()
+        self.ShowLevel()
         self.PlayerInertia()
         self.CheckCollision() 
         self.ShowBots()
@@ -227,7 +229,8 @@ def OpenCMD(self):
             elif re.match(r"[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}", cur_text):
                 text_tp=f'Tentative de connexion vers {text_tp}...'
                 self.screen.fill((0,0,0))
-                self.ShowMap()
+                self.ShowBG()
+                self.ShowLevel()
                 self.ShowBots()
                 if self.pseudo_view:
                     self.ShowPseudos()
@@ -247,7 +250,8 @@ def OpenCMD(self):
                     cur_text=cur_text.replace('0:','')
                     text_tp=f'Tentative de connexion vers localhost:{cur_text}...'
                     self.screen.fill((0,0,0))
-                    self.ShowMap()
+                    self.ShowBG()
+                    self.ShowLevel()
                     self.ShowBots()
                     if self.pseudo_view:
                         self.ShowPseudos()
@@ -378,7 +382,8 @@ def OpenCMD(self):
             elif cur_text=='0':
                 text_tp=f'Tentative de connexion vers localhost:12500...'
                 self.screen.fill((0,0,0))
-                self.ShowMap()
+                self.ShowBG()
+                self.ShowLevel()
                 self.ShowBots()
                 if self.pseudo_view:
                     self.ShowPseudos()
