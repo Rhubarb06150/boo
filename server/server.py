@@ -17,10 +17,10 @@ class Server:
         #TENTATIVE DE RECUPERER LES OPS
 
         try:
-            self.ops=open('assets/.ops','r').read()
+            self.ops=open('ops','r').read()
             self.ops=list(self.ops.split(" "))
         except:
-            pass
+            self.ops=[]
         self.client_list=[]
         try:
             self.port=int(open('port','r').read())
@@ -35,11 +35,9 @@ class Server:
         self.server.listen(5)
 
         print('Chargement de la carte...')
-
         file=open('map/server-map.png','rb')
         image_data=file.read(2048)
         # map_start_pos=json.loads(open('map/map.json','r').read(1024))
-
         print('La carte est chargée')
 
         print(f'Serveur ouvert et en écoute sur {self.server_ip}:{self.port}')
@@ -48,13 +46,15 @@ class Server:
 
             conn, addr = self.server.accept()
 
-            #ENVOI MAP
+            # ENVOI MAP
             
-            while image_data:
-                conn.send(image_data)
-                image_data=file.read(2048)
-            file.close()
-            print('Carte envoyée')
+            # while image_data:
+            #     conn.send(image_data)
+            #     image_data=file.read(2048)
+            # file.close()
+            # print('Carte envoyée')
+
+            # _________
 
             try:
                 print(f"{(socket.gethostbyaddr(addr[0])[0])} s'est connecté ({(addr[0])})")
@@ -71,12 +71,12 @@ class Server:
 
         while True:
 
-            self.clock.tick(60)
             dt_lst=[]
 
             #ICI C LE FORMATTAGE ET LE PAQUETAGE RECU DE TOUT LES CLIENTS
 
             for cli in self.client_list:
+
                 try:
                     dt_lst.append(pickle.loads(cli.recv(1024)))
                 except Exception as e:
@@ -115,10 +115,7 @@ class Server:
 
             #VERIFICATION DES OPS
 
-            try:
-                dt_lst.append(self.ops)
-            except:
-                pass
+            dt_lst.append(self.ops)
 
             #ENVOI DES DONNÉES A TOUT LES CLIENTS   
 
@@ -138,5 +135,7 @@ class Server:
                             self.client_list[-j+1].send('same name'.encode('utf-8'))
                             self.client_list[-j+1].close()
                             break
+
+            self.clock.tick(240)
 
 serv=Server()

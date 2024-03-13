@@ -14,6 +14,7 @@ import shutil
 import json
 
 direction=['L','R']
+states_list=['chasing','running','hiding','mock_1','mock_2']
 
 class Game:
 
@@ -27,7 +28,11 @@ class Game:
         self.player_list=[]
         self.pseudo_view=False
         self.serv_list=[]
+        # self.gb_horror=image.load('assets/gb.png')
         self.screen=display.set_mode((640,576), vsync=1)
+        # self.screen.blit(self.gb_horror,(0,0))
+        # self.screen.set_clip(112,119,420,361)
+        self.screen.set_clip(0,0,640,576)
         self.running=True
         self.clock=pygame.time.Clock()
         display.set_icon(image.load('assets/boo/classic/chasing.png'))
@@ -85,6 +90,8 @@ class Game:
         self.other_player_pos=[0,0]
         self.other_player_state='chasing'
 
+        pygame.key.set_repeat(1,10)
+
         display.set_caption(f'{self.pseudo} - Boogie the game')
 
     #FONCTIONS POUR LES BOTS ___________________________________________________________________________________________________
@@ -126,7 +133,14 @@ class Game:
 
     def ShowPlayer(self):
 
-        self.default_sprite=transform.scale(image.load(f'assets/boo/{self.color}/{self.state}.png'),(46,42))
+        boo=pygame.transform.scale2x(image.load(f'assets/boo/{self.color}.png'))
+        self.default_sprite=pygame.Surface((46,42))
+        for i in range(len(states_list)):
+            if self.state==states_list[i]:
+                break
+        self.default_sprite.blit(boo, (0,0),(i*46,0,i*46+46,42))
+
+        # self.default_sprite=transform.scale(image.load(f'assets/boo/{self.color}/{self.state}.png'),(46,42))
         if self.direction!='L':
             self.player=transform.flip(self.default_sprite,True,False)
         else:
@@ -136,6 +150,7 @@ class Game:
     def ShowOtherPlayers(self):
         self.player_list=[]
         for i in range(self.players_nb):
+            print(self.other_players_infos)
             if self.other_players_infos[i]!=self.other_players_infos[-1]:
                 self.other_default_sprite=transform.scale(image.load(f'assets/boo/{self.other_players_infos[i][1]}.png'),(46,42))
                 if self.other_players_infos[i][2]!='L':
@@ -232,24 +247,21 @@ class Game:
             self.host.client.send(''.encode('utf-8'))
             self.connected=True
 
-            #RECEPTION MAP
+            #  RECEPTION MAP ___
+            # file=open('srvtemp/server-map.png','wb')
+            # image_chunk=self.host.client.recv(2048)
+            # self.host.client.settimeout(0.10)
+            # try:
+            #     for i in image_chunk:
+            #         file.write(image_chunk)
+            #         image_chunk=self.host.client.recv(2048)
+            # except:
+            #     pass
+            # file.close()
+            # self.map_sur=pygame.image.load('srvtemp/server-map.png')
+            # self.map_sur=transform.scale(self.map_sur,(self.map_sur.get_size()[0]*3,self.map_sur.get_size()[1]*3))
+            #  ________________
 
-            file=open('srvtemp/server-map.png','wb')
-            image_chunk=self.host.client.recv(2048)
-            self.host.client.settimeout(0.25)
-
-            try:
-                for i in image_chunk:
-                    file.write(image_chunk)
-            
-                    image_chunk=self.host.client.recv(2048)
-            except:
-                pass
-
-            file.close()
-
-            self.map_sur=pygame.image.load('srvtemp/server-map.png')
-            self.map_sur=transform.scale(self.map_sur,(self.map_sur.get_size()[0]*3,self.map_sur.get_size()[1]*3))
 
             self.Message('Connecté au serveur')
             
@@ -342,19 +354,19 @@ class Game:
                 self.player_speed_r=0
                 self.player_pos[0]=hitbox[0]*48-46
             
-            elif self.collision_vars[index]=='R' and int(self.player_pos[0])<hitbox[0]*48+hitbox[2]*48:
+            if self.collision_vars[index]=='R' and int(self.player_pos[0])<hitbox[0]*48+hitbox[2]*48:
                 self.player_speed_r=self.player_speed_l*self.wall_bounce
                 self.player_speed_l=0
-                self.player_pos[0]=hitbox[0]*48+hitbox[2]*48+0.05
+                self.player_pos[0]=hitbox[0]*48+hitbox[2]*48
 
-            elif self.collision_vars[index]=='U' and int(self.player_pos[1])+42>=hitbox[1]*48:
+            if self.collision_vars[index]=='U' and int(self.player_pos[1])+42>=hitbox[1]*48:
                 self.player_speed_u=self.player_speed_d*self.wall_bounce
                 self.player_speed_d=0
                 self.player_pos[1]=hitbox[1]*48-42
-            elif self.collision_vars[index]=='D' and int(self.player_pos[1])<hitbox[1]*48+hitbox[3]*48:
+            if self.collision_vars[index]=='D' and int(self.player_pos[1])<hitbox[1]*48+hitbox[3]*48:
                 self.player_speed_d=self.player_speed_u*self.wall_bounce
                 self.player_speed_u=0
-                self.player_pos[1]=hitbox[1]*48+hitbox[3]*48+0.05
+                self.player_pos[1]=hitbox[1]*48+hitbox[3]*48
 
             index+=1
 
@@ -438,8 +450,6 @@ class Game:
                     self.player_speed_r=randint(30,60)
             if self.index%10==0:
                 self.direction=direction[randint(0,1)]
-
-        pygame.key.set_repeat(1,10)
 
         for event in pygame.event.get():
 
@@ -527,29 +537,23 @@ class Game:
         if self.state=='hiding':
             self.moving_u,self.moving_d,self.moving_r,self.moving_l=False,False,False,False
 
-        self.PlayerInertia()
         
         if self.state=='hiding':
             if keys[K_f]:
                 self.state='mock_2'
 
-        self.screen.fill((0,0,0))
-
         try:
-
             if self.connected:
-
                 self.ServerCommunication()
-
         except Exception as err:
-
             if self.connected:
                 self.host.client.close()
-
             display.set_caption(f'{self.pseudo} - Boogie the game')
             self.Message('Connexion avec le serveur perdue/intérompue')
             self.connected,self.hosting=False,False
 
+        self.screen.fill((0,0,0))
+        self.PlayerInertia()
         self.ShowBG()
         self.ShowLevel()
         self.ShowBots()

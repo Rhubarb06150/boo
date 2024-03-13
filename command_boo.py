@@ -184,6 +184,7 @@ def OpenCMD(self):
         self.ShowLevel()
         self.PlayerInertia()
         self.CheckCollision() 
+        self.CheckMapCollision() 
         self.ShowBots()
 
         if self.connected:

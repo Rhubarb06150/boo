@@ -211,18 +211,27 @@ def ctrlz():
         msg=messagebox.showerror(title='erreur',message='aucune action a annuler')
 
 def rm_tile():
-    global liste_tiles,im
-    a=0
-    for elm in liste_tiles:
-        if elm[1]==int(x.get()) and elm[2]==int(y.get()):
-            liste_tiles.remove(liste_tiles[a])
-        a+=1
-    img=im.resize((w*16*int(zoom.get()),h*16*int(zoom.get())),Image.NEAREST)
-    cop=(Image.open('assets/tiles/'+default.get()+'.png')).resize((16*int(zoom.get()),16*int(zoom.get())),Image.NEAREST)
-    img.paste(cop, (int(y.get())*16*int(zoom.get()),int(x.get())*16*int(zoom.get())))
-    img=ImageTk.PhotoImage(im)
-    preview.configure(image=img)
-    preview.im=img
+    global liste_tiles,im,hitbox_view,hitboxes
+    if not hitbox_view:
+        a=0
+        for elm in liste_tiles:
+            if elm[1]==int(x.get()) and elm[2]==int(y.get()):
+                liste_tiles.remove(liste_tiles[a])
+                break
+            a+=1
+        cop=(Image.open('assets/tiles/'+default.get()+'.png')).resize((16*int(zoom.get()),16*int(zoom.get())),Image.NEAREST)
+        im.paste(cop, (int(y.get())*16*int(zoom.get()),int(x.get())*16*int(zoom.get())))
+        img=ImageTk.PhotoImage(im)
+        preview.configure(image=img)
+        preview.im=img
+    else:
+        a=0
+        for hitbox in hitboxes:
+            if hitbox[0]==int(y.get()) and hitbox[1]==int(x.get()):
+                hitboxes.remove(hitbox)
+                break
+            a+=1
+        fill_load()
 
 def format_json(data):
     digits = [0,1,2,3,4,5,6,7,8,9]
